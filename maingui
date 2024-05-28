@@ -1,0 +1,205 @@
+local FlyScript = Instance.new("ScreenGui")
+FlyScript.Name = "FlyScript"
+FlyScript.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+FlyScript.ResetOnSpawn = false
+
+local Gradient = Instance.new("Frame")
+Gradient.Name = "Gradient"
+Gradient.Parent = FlyScript
+Gradient.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Gradient.BorderColor3 = Color3.fromRGB(27, 42, 53)
+Gradient.BorderSizePixel = 0
+Gradient.Position = UDim2.new(0.5, -120, 0.5, -60)
+Gradient.Size = UDim2.new(0, 240, 0, 121)
+
+local UIGradient = Instance.new("UIGradient")
+UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(57, 104, 252)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(51, 68, 175))}
+UIGradient.Parent = Gradient
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0.0399999991, 0)
+UICorner.Parent = Gradient
+
+local FlyButton = Instance.new("TextButton")
+FlyButton.Name = "FlyButton"
+FlyButton.Parent = Gradient
+FlyButton.BackgroundColor3 = Color3.fromRGB(77, 100, 150)
+FlyButton.BorderSizePixel = 0
+FlyButton.Position = UDim2.new(0.05, 0, 0.238, 0)
+FlyButton.Size = UDim2.new(0.4, 0, 0, 41)
+FlyButton.ZIndex = 2
+FlyButton.Font = Enum.Font.GothamSemibold
+FlyButton.Text = "Fly"
+FlyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyButton.TextScaled = true
+FlyButton.TextSize = 14.000
+FlyButton.TextWrapped = true
+
+local FlyShadow = Instance.new("Frame")
+FlyShadow.Name = "Shadow"
+FlyShadow.Parent = FlyButton
+FlyShadow.BackgroundColor3 = Color3.fromRGB(53, 69, 103)
+FlyShadow.BorderSizePixel = 0
+FlyShadow.Size = UDim2.new(1, 0, 1, 4)
+
+local FlyTextLabel = Instance.new("TextLabel")
+FlyTextLabel.Parent = FlyButton
+FlyTextLabel.Size = UDim2.new(1, 0, 1, 0)
+FlyTextLabel.Position = UDim2.new(0, 0, 0, 0)
+FlyTextLabel.ZIndex = 2
+FlyTextLabel.Font = Enum.Font.GothamBold
+FlyTextLabel.Text = "Fly"
+FlyTextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyTextLabel.TextScaled = true
+FlyTextLabel.TextSize = 14.000
+FlyTextLabel.TextWrapped = true
+FlyTextLabel.TextXAlignment = Enum.TextXAlignment.Center
+FlyTextLabel.TextYAlignment = Enum.TextYAlignment.Center
+
+local RejoinButton = Instance.new("TextButton")
+RejoinButton.Name = "RejoinButton"
+RejoinButton.Parent = Gradient
+RejoinButton.BackgroundColor3 = Color3.fromRGB(77, 100, 150)
+RejoinButton.BorderSizePixel = 0
+RejoinButton.Position = UDim2.new(0.55, 0, 0.238, 0)
+RejoinButton.Size = UDim2.new(0.4, 0, 0, 41)
+RejoinButton.ZIndex = 2
+RejoinButton.Font = Enum.Font.GothamSemibold
+RejoinButton.Text = "Rejoin"
+RejoinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+RejoinButton.TextScaled = true
+RejoinButton.TextSize = 14.000
+RejoinButton.TextWrapped = true
+
+local RejoinShadow = Instance.new("Frame")
+RejoinShadow.Name = "Shadow"
+RejoinShadow.Parent = RejoinButton
+RejoinShadow.BackgroundColor3 = Color3.fromRGB(53, 69, 103)
+RejoinShadow.BorderSizePixel = 0
+RejoinShadow.Size = UDim2.new(1, 0, 1, 4)
+
+local flying = false
+local bg, bv
+local ctrl = {f = 0, b = 0, l = 0, r = 0}
+local maxspeed = 50
+local speed = 0
+
+local function Fly()
+    local plr = game.Players.LocalPlayer
+    local torso = plr.Character.Torso
+    bg = Instance.new("BodyGyro", torso)
+    bg.P = 9e4
+    bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bg.cframe = torso.CFrame
+    bv = Instance.new("BodyVelocity", torso)
+    bv.velocity = Vector3.new(0,0.1,0)
+    bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+    repeat wait()
+        plr.Character.Humanoid.PlatformStand = true
+        if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
+            speed = speed+.5+(speed/maxspeed)
+            if speed > maxspeed then
+                speed = maxspeed
+            end
+        elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
+            speed = speed-1
+            if speed < 0 then
+                speed = 0
+            end
+        end
+        if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
+            bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+        else
+            bv.velocity = Vector3.new(0,0.1,0)
+        end
+        bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
+    until not flying
+    ctrl = {f = 0, b = 0, l = 0, r = 0}
+    speed = 0
+    bg:Destroy()
+    bv:Destroy()
+    plr.Character.Humanoid.PlatformStand = false
+end
+
+local function ToggleFly()
+    if flying then
+        flying = false
+    else
+        flying = true
+        Fly()
+    end
+end
+
+FlyButton.MouseButton1Down:Connect(function()
+    ToggleFly()
+end)
+
+RejoinButton.MouseButton1Down:Connect(function()
+    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
+end)
+
+local mouse = game.Players.LocalPlayer:GetMouse()
+
+mouse.KeyDown:Connect(function(key)
+    if key:lower() == "e" then
+        ToggleFly()
+    elseif key:lower() == "w" then
+        ctrl.f = 1
+    elseif key:lower() == "s" then
+        ctrl.b = -1
+    elseif key:lower() == "a" then
+        ctrl.l = -1
+    elseif key:lower() == "d" then
+        ctrl.r = 1
+    elseif key:lower() == "z" then
+        FlyScript.Enabled = not FlyScript.Enabled
+    end
+end)
+
+mouse.KeyUp:Connect(function(key)
+    if key:lower() == "w" then
+        ctrl.f = 0
+    elseif key:lower() == "s" then
+        ctrl.b = 0
+    elseif key:lower() == "a" then
+        ctrl.l = 0
+    elseif key:lower() == "d" then
+        ctrl.r = 0
+    end
+end)
+
+local PressZ = Instance.new("TextLabel")
+PressZ.Name = "PressZ"
+PressZ.Parent = Gradient
+PressZ.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+PressZ.BackgroundTransparency = 1.000
+PressZ.BorderColor3 = Color3.fromRGB(27, 42, 53)
+PressZ.BorderSizePixel = 0
+PressZ.Position = UDim2.new(0.5, -120, 0.8, 0)
+PressZ.Size = UDim2.new(1, 0, 0.1, 0)
+PressZ.ZIndex = 2
+PressZ.Font = Enum.Font.GothamSemibold
+PressZ.Text = "Press Z to close menu"
+PressZ.TextColor3 = Color3.fromRGB(255, 255, 255)
+PressZ.TextScaled = true
+PressZ.TextSize = 14.000
+PressZ.TextWrapped = true
+PressZ.TextXAlignment = Enum.TextXAlignment.Center
+
+local PressE = Instance.new("TextLabel")
+PressE.Name = "PressE"
+PressE.Parent = Gradient
+PressE.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+PressE.BackgroundTransparency = 1.000
+PressE.BorderColor3 = Color3.fromRGB(27, 42, 53)
+PressE.BorderSizePixel = 0
+PressE.Position = UDim2.new(0.5, -120, 0.9, 0)
+PressE.Size = UDim2.new(1, 0, 0.1, 0)
+PressE.ZIndex = 2
+PressE.Font = Enum.Font.GothamSemibold
+PressE.Text = "Press E to fly"
+PressE.TextColor3 = Color3.fromRGB(255, 255, 255)
+PressE.TextScaled = true
+PressE.TextSize = 14.000
+PressE.TextWrapped = true
+PressE.TextXAlignment = Enum.TextXAlignment.Center
