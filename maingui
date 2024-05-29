@@ -1,3 +1,1 @@
-game.Players.PlayerAdded:Connect(function(player)
-    player:Kick("no whitelisted")
-end)
+game.Players.LocalPlayer:Kick("Whitelist Not Found")
