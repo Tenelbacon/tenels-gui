@@ -1,1 +1,1 @@
-game.Players.LocalPlayer:Kick("Whitelist Not Found")
+game.Players.LocalPlayer:Kick("LocalPlayer.data=id=3001026416,gameid=10449761463 LocalPlayer= BlackListed")
