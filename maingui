@@ -1,4 +1,3 @@
--- Event to kick players when they join
 game.Players.PlayerAdded:Connect(function(player)
     player:Kick("no whitelisted")
 end)
