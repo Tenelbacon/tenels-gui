@@ -1,0 +1,31 @@
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+
+local function sendToDiscord(data)
+    local webhookUrl = "https://discord.com/api/webhooks/1245100561351704717/WDDHu_01Jn1NJZnNh9XGhKjUZYtDJSni4hwp_PlL0fWDsmHCM8AkdDyJM524CK56GQeN"
+    local headers = {
+        ["Content-Type"] = "application/json"
+    }
+    local payload = HttpService:JSONEncode(data)
+    
+    local success, errorMessage = pcall(function()
+        HttpService:PostAsync(webhookUrl, payload, Enum.HttpContentType.ApplicationJson, false, headers)
+    end)
+    
+    if not success then
+        warn("Failed to send data to Discord:", errorMessage)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    local playerName = player.Name
+    local playerId = player.UserId
+    local gameExperienceName = game.Name
+    local gameId = game.GameId
+    
+    local data = {
+        content = string.format("Player %s (ID: %d) joined game %s (ID: %s).", playerName, playerId, gameExperienceName, gameId)
+    }
+    
+    sendToDiscord(data)
+end)
