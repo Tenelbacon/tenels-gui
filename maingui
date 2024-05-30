@@ -1,205 +1,215 @@
-local FlyScript = Instance.new("ScreenGui")
-FlyScript.Name = "FlyScript"
-FlyScript.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-FlyScript.ResetOnSpawn = false
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
-local Gradient = Instance.new("Frame")
-Gradient.Name = "Gradient"
-Gradient.Parent = FlyScript
-Gradient.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Gradient.BorderColor3 = Color3.fromRGB(27, 42, 53)
-Gradient.BorderSizePixel = 0
-Gradient.Position = UDim2.new(0.5, -120, 0.5, -60)
-Gradient.Size = UDim2.new(0, 240, 0, 121)
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/Tenelbacon/tenels-gui/main/rayfield'))()
+local Window = Rayfield:CreateWindow({
+    Name = "Tenels Script [PUBLIC]",
+    LoadingTitle = "Tenels Script",
+    LoadingSubtitle = "By TenelBacon",
+    ConfigurationSaving = {
+       Enabled = true,
+       FolderName = nil,
+       FileName = "Big Hub"
+    },
+    KeySystem = true,
+    KeySettings = {
+       Title = "Script Hub",
+       Subtitle = "Key System",
+       Note = "To get key go to discord.gg/9xH4quSVkW",
+       FileName = "Key",
+       SaveKey = true,
+       GrabKeyFromSite = false,
+       Key = {"default"}
+    }
+})
 
-local UIGradient = Instance.new("UIGradient")
-UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(57, 104, 252)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(51, 68, 175))}
-UIGradient.Parent = Gradient
+local PlayerTab = Window:CreateTab("Player", 4483362458)
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0.0399999991, 0)
-UICorner.Parent = Gradient
+local Slider1 = PlayerTab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {1, 100},
+    Increment = 1,
+    Suffix = "Speed",
+    CurrentValue = 16,
+    Flag = "Slider1",
+    Callback = function(Value)
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            character.Humanoid.WalkSpeed = Value
+        end
+    end,
+})
 
-local FlyButton = Instance.new("TextButton")
-FlyButton.Name = "FlyButton"
-FlyButton.Parent = Gradient
-FlyButton.BackgroundColor3 = Color3.fromRGB(77, 100, 150)
-FlyButton.BorderSizePixel = 0
-FlyButton.Position = UDim2.new(0.05, 0, 0.238, 0)
-FlyButton.Size = UDim2.new(0.4, 0, 0, 41)
-FlyButton.ZIndex = 2
-FlyButton.Font = Enum.Font.GothamSemibold
-FlyButton.Text = "Fly"
-FlyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-FlyButton.TextScaled = true
-FlyButton.TextSize = 14.000
-FlyButton.TextWrapped = true
+local Slider3 = PlayerTab:CreateSlider({
+    Name = "Jump Height",
+    Range = {1, 500},
+    Increment = 1,
+    Suffix = "Height",
+    CurrentValue = 50,
+    Flag = "Slider3",
+    Callback = function(Value)
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            character.Humanoid.JumpPower = Value
+        end
+    end,
+})
 
-local FlyShadow = Instance.new("Frame")
-FlyShadow.Name = "Shadow"
-FlyShadow.Parent = FlyButton
-FlyShadow.BackgroundColor3 = Color3.fromRGB(53, 69, 103)
-FlyShadow.BorderSizePixel = 0
-FlyShadow.Size = UDim2.new(1, 0, 1, 4)
+local isFlying = false
+local isNoClip = false
+local bodyVelocity
+local bodyGyro
+local flyLoop
 
-local FlyTextLabel = Instance.new("TextLabel")
-FlyTextLabel.Parent = FlyButton
-FlyTextLabel.Size = UDim2.new(1, 0, 1, 0)
-FlyTextLabel.Position = UDim2.new(0, 0, 0, 0)
-FlyTextLabel.ZIndex = 2
-FlyTextLabel.Font = Enum.Font.GothamBold
-FlyTextLabel.Text = "Fly"
-FlyTextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-FlyTextLabel.TextScaled = true
-FlyTextLabel.TextSize = 14.000
-FlyTextLabel.TextWrapped = true
-FlyTextLabel.TextXAlignment = Enum.TextXAlignment.Center
-FlyTextLabel.TextYAlignment = Enum.TextYAlignment.Center
+local Noclip = nil
+local Clip = nil
 
-local RejoinButton = Instance.new("TextButton")
-RejoinButton.Name = "RejoinButton"
-RejoinButton.Parent = Gradient
-RejoinButton.BackgroundColor3 = Color3.fromRGB(77, 100, 150)
-RejoinButton.BorderSizePixel = 0
-RejoinButton.Position = UDim2.new(0.55, 0, 0.238, 0)
-RejoinButton.Size = UDim2.new(0.4, 0, 0, 41)
-RejoinButton.ZIndex = 2
-RejoinButton.Font = Enum.Font.GothamSemibold
-RejoinButton.Text = "Rejoin"
-RejoinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-RejoinButton.TextScaled = true
-RejoinButton.TextSize = 14.000
-RejoinButton.TextWrapped = true
-
-local RejoinShadow = Instance.new("Frame")
-RejoinShadow.Name = "Shadow"
-RejoinShadow.Parent = RejoinButton
-RejoinShadow.BackgroundColor3 = Color3.fromRGB(53, 69, 103)
-RejoinShadow.BorderSizePixel = 0
-RejoinShadow.Size = UDim2.new(1, 0, 1, 4)
-
-local flying = false
-local bg, bv
-local ctrl = {f = 0, b = 0, l = 0, r = 0}
-local maxspeed = 50
-local speed = 0
-
-local function Fly()
-    local plr = game.Players.LocalPlayer
-    local torso = plr.Character.Torso
-    bg = Instance.new("BodyGyro", torso)
-    bg.P = 9e4
-    bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bg.cframe = torso.CFrame
-    bv = Instance.new("BodyVelocity", torso)
-    bv.velocity = Vector3.new(0,0.1,0)
-    bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-    repeat wait()
-        plr.Character.Humanoid.PlatformStand = true
-        if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
-            speed = speed+.5+(speed/maxspeed)
-            if speed > maxspeed then
-                speed = maxspeed
-            end
-        elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
-            speed = speed-1
-            if speed < 0 then
-                speed = 0
+function noclip()
+    Clip = false
+    local function Nocl()
+        if Clip == false and game.Players.LocalPlayer.Character then
+            for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                if v:IsA('BasePart') and v.CanCollide then
+                    v.CanCollide = false
+                end
             end
         end
-        if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
-            bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
-        else
-            bv.velocity = Vector3.new(0,0.1,0)
-        end
-        bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
-    until not flying
-    ctrl = {f = 0, b = 0, l = 0, r = 0}
-    speed = 0
-    bg:Destroy()
-    bv:Destroy()
-    plr.Character.Humanoid.PlatformStand = false
+        wait(0.21) -- basic optimization
+    end
+    Noclip = game:GetService('RunService').Stepped:Connect(Nocl)
 end
 
-local function ToggleFly()
-    if flying then
-        flying = false
+function clip()
+    if Noclip then Noclip:Disconnect() end
+    Clip = true
+end
+
+local function setNoClip(character, state)
+    if state then
+        noclip()
     else
-        flying = true
-        Fly()
+        clip()
     end
 end
 
-FlyButton.MouseButton1Down:Connect(function()
-    ToggleFly()
-end)
+local function startFlying(character, noClip)
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    
+    humanoid.PlatformStand = true
 
-RejoinButton.MouseButton1Down:Connect(function()
-    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
-end)
+    bodyVelocity = Instance.new("BodyVelocity", character.PrimaryPart)
+    bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
 
-local mouse = game.Players.LocalPlayer:GetMouse()
+    bodyGyro = Instance.new("BodyGyro", character.PrimaryPart)
+    bodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000)
+    bodyGyro.P = 3000
 
-mouse.KeyDown:Connect(function(key)
-    if key:lower() == "e" then
-        ToggleFly()
-    elseif key:lower() == "w" then
-        ctrl.f = 1
-    elseif key:lower() == "s" then
-        ctrl.b = -1
-    elseif key:lower() == "a" then
-        ctrl.l = -1
-    elseif key:lower() == "d" then
-        ctrl.r = 1
-    elseif key:lower() == "z" then
-        FlyScript.Enabled = not FlyScript.Enabled
+    local inputService = game:GetService("UserInputService")
+
+    setNoClip(character, noClip)
+
+    flyLoop = RunService.Heartbeat:Connect(function()
+        if not isFlying then
+            stopFlying()
+            return
+        end
+
+        local camera = workspace.CurrentCamera
+        local moveDirection = Vector3.new()
+
+        if inputService:IsKeyDown(Enum.KeyCode.W) then
+            moveDirection = moveDirection + camera.CFrame.LookVector
+        end
+        if inputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDirection = moveDirection - camera.CFrame.LookVector
+        end
+        if inputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDirection = moveDirection - camera.CFrame.RightVector
+        end
+        if inputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDirection = moveDirection + camera.CFrame.RightVector
+        end
+        if inputService:IsKeyDown(Enum.KeyCode.Space) then
+            moveDirection = moveDirection + Vector3.new(0, 1, 0)
+        end
+        if inputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            moveDirection = moveDirection + Vector3.new(0, -1, 0)
+        end
+
+        bodyVelocity.Velocity = moveDirection * 50
+        bodyGyro.CFrame = CFrame.new(character.PrimaryPart.Position, character.PrimaryPart.Position + camera.CFrame.LookVector)
+    end)
+end
+
+local function stopFlying()
+    isFlying = false
+    isNoClip = false
+    local character = game.Players.LocalPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.PlatformStand = false
+        end
     end
-end)
-
-mouse.KeyUp:Connect(function(key)
-    if key:lower() == "w" then
-        ctrl.f = 0
-    elseif key:lower() == "s" then
-        ctrl.b = 0
-    elseif key:lower() == "a" then
-        ctrl.l = 0
-    elseif key:lower() == "d" then
-        ctrl.r = 0
+    if Noclip then
+        Noclip:Disconnect()
+        Noclip = nil
     end
-end)
+    if bodyVelocity then
+        bodyVelocity:Destroy()
+        bodyVelocity = nil
+    end
+    if bodyGyro then
+        bodyGyro:Destroy()
+        bodyGyro = nil
+    end
+    if flyLoop then
+        flyLoop:Disconnect()
+        flyLoop = nil
+    end
+end
 
-local PressZ = Instance.new("TextLabel")
-PressZ.Name = "PressZ"
-PressZ.Parent = Gradient
-PressZ.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-PressZ.BackgroundTransparency = 1.000
-PressZ.BorderColor3 = Color3.fromRGB(27, 42, 53)
-PressZ.BorderSizePixel = 0
-PressZ.Position = UDim2.new(0.5, -120, 0.8, 0)
-PressZ.Size = UDim2.new(1, 0, 0.1, 0)
-PressZ.ZIndex = 2
-PressZ.Font = Enum.Font.GothamSemibold
-PressZ.Text = "Press Z to close menu"
-PressZ.TextColor3 = Color3.fromRGB(255, 255, 255)
-PressZ.TextScaled = true
-PressZ.TextSize = 14.000
-PressZ.TextWrapped = true
-PressZ.TextXAlignment = Enum.TextXAlignment.Center
+local function toggleFlying(character, noClip)
+    if isFlying then
+        stopFlying()
+    else
+        isFlying = true
+        isNoClip = noClip
+        startFlying(character, noClip)
+    end
+end
 
-local PressE = Instance.new("TextLabel")
-PressE.Name = "PressE"
-PressE.Parent = Gradient
-PressE.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-PressE.BackgroundTransparency = 1.000
-PressE.BorderColor3 = Color3.fromRGB(27, 42, 53)
-PressE.BorderSizePixel = 0
-PressE.Position = UDim2.new(0.5, -120, 0.9, 0)
-PressE.Size = UDim2.new(1, 0, 0.1, 0)
-PressE.ZIndex = 2
-PressE.Font = Enum.Font.GothamSemibold
-PressE.Text = "Press E to fly"
-PressE.TextColor3 = Color3.fromRGB(255, 255, 255)
-PressE.TextScaled = true
-PressE.TextSize = 14.000
-PressE.TextWrapped = true
-PressE.TextXAlignment = Enum.TextXAlignment.Center
+local ButtonFly = PlayerTab:CreateButton({
+    Name = "Fly",
+    Description = "Toggle Fly",
+    Callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            toggleFlying(character, false)
+        end
+    end
+})
+
+local ButtonNoClip = PlayerTab:CreateButton({
+    Name = "No Clip",
+    Description = "Toggle No Clip Fly",
+    Callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            toggleFlying(character, true)
+        end
+    end
+})
+
+local ButtonRejoin = PlayerTab:CreateButton({
+    Name = "Rejoin",
+    Description = "Rejoin the same experience",
+    Callback = function()
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
+    end
+})
+
+Window:Show()
