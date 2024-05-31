@@ -1,5 +1,5 @@
 -- Load the Orion library
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source", true))()
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Tenelbacon/tenels-gui/main/orion", true))()
 
 -- Load the main script
 local HttpService = game:GetService("HttpService")
