@@ -1,7 +1,17 @@
 -- Load the Orion library
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Tenelbacon/tenels-gui/main/orion", true))()
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source", true))()
 
--- Now create the rest of the UI as before
+-- Load the main script
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Directly set the key
+local key = "your_key_here"
+OrionLib.KeySettings.Key = {key}
+
+-- Creating a window
 local Window = OrionLib:MakeWindow({
     Name = "Tenels Script [PUBLIC]",
     LoadingTitle = "Tenels Script",
@@ -19,52 +29,71 @@ local Window = OrionLib:MakeWindow({
        FileName = "Key",
        SaveKey = true,
        GrabKeyFromSite = false,
-       Key = {"your_key_here"}  -- Use the fetched key here
+       Key = {key}
     }
 })
 
-local PlayerTab = Window:MakeTab("Player", 4483362458)
+local PlayerTab = Window:MakeTab({
+    Name = "Player",
+    Icon = "rbxassetid://4483362458",
+    PremiumOnly = false
+})
 
-local Slider1 = PlayerTab:MakeSlider({
+-- Creating sliders
+local WalkSpeedSlider = PlayerTab:MakeSlider({
     Name = "WalkSpeed",
-    MinValue = 1,
-    MaxValue = 100,
-    Step = 1,
-    DefaultValue = 16,
-    Flag = "Slider1",
+    Min = 1,
+    Max = 100,
+    Default = 16,
     Callback = function(Value)
         local character = game.Players.LocalPlayer.Character
         if character then
             character.Humanoid.WalkSpeed = Value
         end
-    end,
+    end
 })
 
-local Slider3 = PlayerTab:MakeSlider({
+local JumpHeightSlider = PlayerTab:MakeSlider({
     Name = "Jump Height",
-    MinValue = 1,
-    MaxValue = 500,
-    Step = 1,
-    DefaultValue = 50,
-    Flag = "Slider3",
+    Min = 1,
+    Max = 500,
+    Default = 50,
     Callback = function(Value)
         local character = game.Players.LocalPlayer.Character
         if character then
             character.Humanoid.JumpPower = Value
         end
-    end,
+    end
 })
 
+-- Toggling flying
 local isFlying = false
+
+local function toggleFlying(character, noClip)
+    if isFlying then
+        stopFlying()
+    else
+        isFlying = true
+        isNoClip = noClip
+        startFlying(character, noClip)
+    end
+end
+
+local ButtonFly = PlayerTab:MakeButton({
+    Name = "Fly",
+    Description = "Toggle Fly",
+    Callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            toggleFlying(character, false)
+        end
+    end
+})
+
+-- Toggling no-clip
 local isNoClip = false
-local bodyVelocity
-local bodyGyro
-local flyLoop
 
-local Noclip = nil
-local Clip = nil
-
-function noclip()
+local function noclip()
     Clip = false
     local function Nocl()
         if Clip == false and game.Players.LocalPlayer.Character then
@@ -79,7 +108,7 @@ function noclip()
     Noclip = game:GetService('RunService').Stepped:Connect(Nocl)
 end
 
-function clip()
+local function clip()
     if Noclip then Noclip:Disconnect() end
     Clip = true
 end
@@ -109,13 +138,13 @@ local function startFlying(character, noClip)
 
     setNoClip(character, noClip)
 
-    flyLoop = game:GetService("RunService").Heartbeat:Connect(function()
+    flyLoop = RunService.Heartbeat:Connect(function()
         if not isFlying then
             stopFlying()
             return
         end
 
-        local camera = game.Workspace.CurrentCamera
+        local camera = workspace.CurrentCamera
         local moveDirection = Vector3.new()
 
         if inputService:IsKeyDown(Enum.KeyCode.W) then
@@ -170,30 +199,9 @@ local function stopFlying()
     end
 end
 
-local function toggleFlying(character, noClip)
-    if isFlying then
-        stopFlying()
-    else
-        isFlying = true
-        isNoClip = noClip
-        startFlying(character, noClip)
-    end
-end
-
-local ButtonFly = PlayerTab:MakeButton({
-    Name = "Fly",
-    Description = "Toggle Fly",
-    Callback = function()
-        local character = game.Players.LocalPlayer.Character
-        if character then
-            toggleFlying(character, false)
-        end
-    end
-})
-
-local ButtonNoClip = PlayerTab:MakeButton({
+local ButtonNoClip = PlayerTab:CreateButton({
     Name = "No Clip",
-    Description = "Toggle No Clip Fly",
+    Description = "Toggle No Clip",
     Callback = function()
         local character = game.Players.LocalPlayer.Character
         if character then
@@ -202,7 +210,7 @@ local ButtonNoClip = PlayerTab:MakeButton({
     end
 })
 
-local ButtonRejoin = PlayerTab:MakeButton({
+local ButtonRejoin = PlayerTab:CreateButton({
     Name = "Rejoin",
     Description = "Rejoin the same experience",
     Callback = function()
@@ -210,4 +218,5 @@ local ButtonRejoin = PlayerTab:MakeButton({
     end
 })
 
-Window:Show()
+-- Finishing the script
+OrionLib:Init()
