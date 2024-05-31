@@ -1,50 +1,30 @@
--- Load the Orion library
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Tenelbacon/tenels-gui/main/orion", true))()
-
--- Load the main script
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
--- Directly set the key
-local key = "your_key_here"
-OrionLib.KeySettings.Key = {key}
-
--- Creating a window
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/Tenelbacon/tenels-gui/main/orion')))()
 local Window = OrionLib:MakeWindow({
     Name = "Tenels Script [PUBLIC]",
-    LoadingTitle = "Tenels Script",
-    LoadingSubtitle = "By TenelBacon",
-    ConfigurationSaving = {
-       Enabled = true,
-       FolderName = nil,
-       FileName = "Big Hub"
-    },
-    KeySystem = true,
-    KeySettings = {
-       Title = "Script Hub",
-       Subtitle = "Key System",
-       Note = "To get key go to discord.gg/9xH4quSVkW",
-       FileName = "Key",
-       SaveKey = true,
-       GrabKeyFromSite = false,
-       Key = {key}
-    }
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "BigHub"
 })
 
 local PlayerTab = Window:MakeTab({
     Name = "Player",
-    Icon = "rbxassetid://4483362458",
+    Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
--- Creating sliders
-local WalkSpeedSlider = PlayerTab:MakeSlider({
+PlayerTab:AddSlider({
     Name = "WalkSpeed",
     Min = 1,
     Max = 100,
     Default = 16,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 1,
+    ValueName = "Speed",
     Callback = function(Value)
         local character = game.Players.LocalPlayer.Character
         if character then
@@ -53,11 +33,14 @@ local WalkSpeedSlider = PlayerTab:MakeSlider({
     end
 })
 
-local JumpHeightSlider = PlayerTab:MakeSlider({
+PlayerTab:AddSlider({
     Name = "Jump Height",
     Min = 1,
     Max = 500,
     Default = 50,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 1,
+    ValueName = "Height",
     Callback = function(Value)
         local character = game.Players.LocalPlayer.Character
         if character then
@@ -66,49 +49,31 @@ local JumpHeightSlider = PlayerTab:MakeSlider({
     end
 })
 
--- Toggling flying
 local isFlying = false
-
-local function toggleFlying(character, noClip)
-    if isFlying then
-        stopFlying()
-    else
-        isFlying = true
-        isNoClip = noClip
-        startFlying(character, noClip)
-    end
-end
-
-local ButtonFly = PlayerTab:MakeButton({
-    Name = "Fly",
-    Description = "Toggle Fly",
-    Callback = function()
-        local character = game.Players.LocalPlayer.Character
-        if character then
-            toggleFlying(character, false)
-        end
-    end
-})
-
--- Toggling no-clip
 local isNoClip = false
+local bodyVelocity
+local bodyGyro
+local flyLoop
 
-local function noclip()
+local Noclip = nil
+local Clip = nil
+
+function noclip()
     Clip = false
     local function Nocl()
         if Clip == false and game.Players.LocalPlayer.Character then
-            for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+            for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
                 if v:IsA('BasePart') and v.CanCollide then
                     v.CanCollide = false
                 end
             end
         end
-        wait(0.21) -- basic optimization
+        wait(0.21)
     end
     Noclip = game:GetService('RunService').Stepped:Connect(Nocl)
 end
 
-local function clip()
+function clip()
     if Noclip then Noclip:Disconnect() end
     Clip = true
 end
@@ -199,9 +164,28 @@ local function stopFlying()
     end
 end
 
-local ButtonNoClip = PlayerTab:CreateButton({
+local function toggleFlying(character, noClip)
+    if isFlying then
+        stopFlying()
+    else
+        isFlying = true
+        isNoClip = noClip
+        startFlying(character, noClip)
+    end
+end
+
+PlayerTab:AddButton({
+    Name = "Fly",
+    Callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            toggleFlying(character, false)
+        end
+    end
+})
+
+PlayerTab:AddButton({
     Name = "No Clip",
-    Description = "Toggle No Clip",
     Callback = function()
         local character = game.Players.LocalPlayer.Character
         if character then
@@ -210,13 +194,11 @@ local ButtonNoClip = PlayerTab:CreateButton({
     end
 })
 
-local ButtonRejoin = PlayerTab:CreateButton({
+PlayerTab:AddButton({
     Name = "Rejoin",
-    Description = "Rejoin the same experience",
     Callback = function()
         game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
     end
 })
 
--- Finishing the script
 OrionLib:Init()
