@@ -42,7 +42,7 @@ local function keepWalkSpeedConstant()
         if character then
             character.Humanoid.WalkSpeed = walkSpeedValue
         end
-        wait(0.1) -- Adjust the frequency as needed
+        wait(0.1)
     end
 end
 
@@ -52,7 +52,7 @@ local function keepJumpHeightConstant()
         if character then
             character.Humanoid.JumpPower = jumpHeightValue
         end
-        wait(0.1) -- Adjust the frequency as needed
+        wait(0.1)
     end
 end
 
@@ -82,7 +82,6 @@ PlayerTab:AddSlider({
     end
 })
 
--- Start the loops to keep the values constant
 spawn(keepWalkSpeedConstant)
 spawn(keepJumpHeightConstant)
 
@@ -237,5 +236,50 @@ PlayerTab:AddButton({
         game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
     end
 })
+
+local WorldTab = Window:MakeTab({
+    Name = "World",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local function getPlayerNames()
+    local playerNames = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer then
+            table.insert(playerNames, player.Name)
+        end
+    end
+    return playerNames
+end
+
+local function teleportToPlayer(playerName)
+    local targetPlayer = Players:FindFirstChild(playerName)
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character.PrimaryPart then
+        local character = Players.LocalPlayer.Character
+        if character and character.PrimaryPart then
+            character:SetPrimaryPartCFrame(targetPlayer.Character.PrimaryPart.CFrame)
+        end
+    end
+end
+
+local playerDropdown
+
+local function refreshPlayerDropdown()
+    local playerNames = getPlayerNames()
+    playerDropdown:Refresh(playerNames, true)
+end
+
+playerDropdown = WorldTab:AddDropdown({
+    Name = "Teleport to Player",
+    Default = "",
+    Options = getPlayerNames(),
+    Callback = function(Value)
+        teleportToPlayer(Value)
+    end
+})
+
+Players.PlayerAdded:Connect(refreshPlayerDropdown)
+Players.PlayerRemoving:Connect(refreshPlayerDropdown)
 
 OrionLib:Init()
