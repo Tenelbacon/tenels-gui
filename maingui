@@ -1,10 +1,8 @@
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+-- Load the Orion library
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Tenelbacon/tenels-gui/main/orion", true))()
 
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/Tenelbacon/tenels-gui/main/rayfield'))()
-local Window = Rayfield:CreateWindow({
+-- Now create the rest of the UI as before
+local Window = OrionLib:MakeWindow({
     Name = "Tenels Script [PUBLIC]",
     LoadingTitle = "Tenels Script",
     LoadingSubtitle = "By TenelBacon",
@@ -21,18 +19,18 @@ local Window = Rayfield:CreateWindow({
        FileName = "Key",
        SaveKey = true,
        GrabKeyFromSite = false,
-       Key = {"key"}
+       Key = {"your_key_here"}  -- Use the fetched key here
     }
 })
 
-local PlayerTab = Window:CreateTab("Player", 4483362458)
+local PlayerTab = Window:MakeTab("Player", 4483362458)
 
-local Slider1 = PlayerTab:CreateSlider({
+local Slider1 = PlayerTab:MakeSlider({
     Name = "WalkSpeed",
-    Range = {1, 100},
-    Increment = 1,
-    Suffix = "Speed",
-    CurrentValue = 16,
+    MinValue = 1,
+    MaxValue = 100,
+    Step = 1,
+    DefaultValue = 16,
     Flag = "Slider1",
     Callback = function(Value)
         local character = game.Players.LocalPlayer.Character
@@ -42,12 +40,12 @@ local Slider1 = PlayerTab:CreateSlider({
     end,
 })
 
-local Slider3 = PlayerTab:CreateSlider({
+local Slider3 = PlayerTab:MakeSlider({
     Name = "Jump Height",
-    Range = {1, 500},
-    Increment = 1,
-    Suffix = "Height",
-    CurrentValue = 50,
+    MinValue = 1,
+    MaxValue = 500,
+    Step = 1,
+    DefaultValue = 50,
     Flag = "Slider3",
     Callback = function(Value)
         local character = game.Players.LocalPlayer.Character
@@ -111,13 +109,13 @@ local function startFlying(character, noClip)
 
     setNoClip(character, noClip)
 
-    flyLoop = RunService.Heartbeat:Connect(function()
+    flyLoop = game:GetService("RunService").Heartbeat:Connect(function()
         if not isFlying then
             stopFlying()
             return
         end
 
-        local camera = workspace.CurrentCamera
+        local camera = game.Workspace.CurrentCamera
         local moveDirection = Vector3.new()
 
         if inputService:IsKeyDown(Enum.KeyCode.W) then
@@ -182,7 +180,7 @@ local function toggleFlying(character, noClip)
     end
 end
 
-local ButtonFly = PlayerTab:CreateButton({
+local ButtonFly = PlayerTab:MakeButton({
     Name = "Fly",
     Description = "Toggle Fly",
     Callback = function()
@@ -193,7 +191,7 @@ local ButtonFly = PlayerTab:CreateButton({
     end
 })
 
-local ButtonNoClip = PlayerTab:CreateButton({
+local ButtonNoClip = PlayerTab:MakeButton({
     Name = "No Clip",
     Description = "Toggle No Clip Fly",
     Callback = function()
@@ -204,7 +202,7 @@ local ButtonNoClip = PlayerTab:CreateButton({
     end
 })
 
-local ButtonRejoin = PlayerTab:CreateButton({
+local ButtonRejoin = PlayerTab:MakeButton({
     Name = "Rejoin",
     Description = "Rejoin the same experience",
     Callback = function()
